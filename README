@@ -1,0 +1,9 @@
+Dynamic REST
+
+This is a small project demonstrating REST service access,
+working against JSON data and XML data using late-bound
+dynamic code using the new dynamic programming features being
+added to c# 4.0.
+
+JSON data
+http://www.nikhilk.net/CSharp-Dynamic-Programming-JSON.aspx
