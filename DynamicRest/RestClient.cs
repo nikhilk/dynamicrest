@@ -24,11 +24,10 @@ namespace DynamicRest {
             string operation = action.Name;
 
             if (IsValidRestOperation(operation)) {
-                if (args.Length != 1) {
-                    throw new ArgumentException("Mismatch in the number of arguments.");
+                JsonObject argsObject = null;
+                if ((args != null) && (args.Length != 0)) {
+                    argsObject = (JsonObject)args[0];
                 }
-
-                JsonObject argsObject = (JsonObject)args[0];
                 Uri requestUri = CreateRequestUri(operation, argsObject);
 
                 HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(requestUri);

@@ -32,8 +32,10 @@ namespace Services {
             StringBuilder uriBuilder = new StringBuilder();
             uriBuilder.AppendFormat(AwsUrlFormat, _subscriptionID, operation);
 
-            foreach (KeyValuePair<string, object> param in (IDictionary<string, object>)parameters) {
-                uriBuilder.AppendFormat(CultureInfo.InvariantCulture, "&{0}={1}", param.Key, param.Value);
+            if (parameters != null) {
+                foreach (KeyValuePair<string, object> param in (IDictionary<string, object>)parameters) {
+                    uriBuilder.AppendFormat(CultureInfo.InvariantCulture, "&{0}={1}", param.Key, param.Value);
+                }
             }
 
             return new Uri(uriBuilder.ToString(), UriKind.Absolute);
