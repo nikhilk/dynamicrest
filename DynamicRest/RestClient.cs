@@ -10,11 +10,13 @@ using System.Net;
 using System.Scripting.Actions;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Web;
 using System.Xml.Linq;
 
 namespace DynamicRest {
 
     public sealed class RestClient : DynamicObject {
+
         private static readonly Regex TokenFormatRewriteRegex =
             new Regex(@"(?<start>\{)+(?<property>[\w\.\[\]]+)(?<format>:[^}]+)?(?<end>\})+",
                        RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant); 
@@ -98,7 +100,10 @@ namespace DynamicRest {
 
             if (parameters != null) {
                 foreach (KeyValuePair<string, object> param in (IDictionary<string, object>)parameters) {
-                    uriBuilder.AppendFormat(CultureInfo.InvariantCulture, "&{0}={1}", param.Key, param.Value);
+                    string value = String.Format(CultureInfo.InvariantCulture, "{0}", param.Value);
+                    value = HttpUtility.UrlEncode(value);
+
+                    uriBuilder.AppendFormat("&{0}={1}", param.Key, value);
                 }
             }
 
