@@ -41,14 +41,24 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AmazonSample.cs" />
+    <Compile Include="JsonSample.cs" />
+    <Compile Include="FlickrSample.cs" />
     <Compile Include="Core\StandardActionKinds.cs" />
     <Compile Include="Core\DynamicObject.cs" />
     <Compile Include="DynamicRest\JsonArray.cs" />
     <Compile Include="DynamicRest\JsonObject.cs" />
     <Compile Include="DynamicRest\JsonReader.cs" />
     <Compile Include="DynamicRest\JsonWriter.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="DynamicRest\XmlNode.cs" />
+    <Compile Include="DynamicRest\XmlNodeList.cs" />
+    <Compile Include="DynamicRest\RestClient.cs" />
+    <Compile Include="Program.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\Amazon.cs" />
+    <Compile Include="Services\Flickr.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
