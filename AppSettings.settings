@@ -1,0 +1,18 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Dynamic.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="FlickrUri" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">http://api.flickr.com/services/rest/?method=flickr.{operation}&amp;api_key={apiKey}&amp;format=json&amp;nojsoncallback=1</Value>
+    </Setting>
+    <Setting Name="FlickrApiKey" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">be9b6f66bd7a1c0c0f1465a1b7e8a764</Value>
+    </Setting>
+    <Setting Name="AmazonUri" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">http://webservices.amazon.com/onca/xml?Service=AWSECommerceService&amp;SubscriptionId={subscriptionID}&amp;Operation={operation}</Value>
+    </Setting>
+    <Setting Name="AmazonSubscriptionID" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">1S494ZXP934WJ38NH5R2</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

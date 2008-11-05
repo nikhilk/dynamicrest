@@ -3,9 +3,19 @@
 
 using System;
 
-public static class Program {
+namespace Application {
 
-    public static void Main(string[] args) {
-        FlickrSample.Run();
+    public static class Program {
+
+        public static void Main(string[] args) {
+            // Flickr Sample
+            FlickrSample.Run();
+
+            // Amazon Sample
+            // AmazonSample.Run();
+
+            // JSON Sample
+            // JsonSample.Run();
+        }
     }
 }
