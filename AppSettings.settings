@@ -14,14 +14,14 @@
     <Setting Name="AmazonSubscriptionID" Type="System.String" Scope="Application">
       <Value Profile="(Default)">[Your Subscription ID]</Value>
     </Setting>
-    <Setting Name="LiveSearchUri" Type="System.String" Scope="User">
-      <Value Profile="(Default)">http://api.{operation}.live.net/json.aspx?AppId={appID}&amp;Market=en-US&amp;Sources=web</Value>
+    <Setting Name="LiveSearchUri" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">http://api.search.live.net/json.aspx?AppId={appID}&amp;Market=en-US&amp;Sources=web</Value>
     </Setting>
-    <Setting Name="LiveSearchApiKey" Type="System.String" Scope="User">
+    <Setting Name="LiveSearchApiKey" Type="System.String" Scope="Application">
       <Value Profile="(Default)">[Your API Key]</Value>
     </Setting>
-    <Setting Name="GoogleSearchUri" Type="System.String" Scope="User">
-      <Value Profile="(Default)">http://ajax.googleapis.com/ajax/services/{operation}/web?v=1.0</Value>
+    <Setting Name="GoogleSearchUri" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">http://ajax.googleapis.com/ajax/services/search/web?v=1.0</Value>
     </Setting>
   </Settings>
 </SettingsFile>

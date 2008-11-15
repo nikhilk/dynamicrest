@@ -31,7 +31,8 @@ namespace DynamicRest {
         private Dictionary<string, object> _parameters;
 
         public RestClient(string uriFormat, RestClientMode mode)
-            : base(StandardActionKinds.GetMember | StandardActionKinds.SetMember | StandardActionKinds.Call) {
+            : base(StandardActionKinds.GetMember | StandardActionKinds.SetMember |
+                   StandardActionKinds.Call | StandardActionKinds.Invoke) {
             _uriFormat = uriFormat;
             _mode = mode;
         }
@@ -48,23 +49,7 @@ namespace DynamicRest {
                 operation = _operationGroup + "." + operation;
             }
 
-            JsonObject argsObject = null;
-            if ((args != null) && (args.Length != 0)) {
-                argsObject = (JsonObject)args[0];
-            }
-            Uri requestUri = CreateRequestUri(operation, argsObject);
-
-            HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(requestUri);
-            HttpWebResponse webResponse = (HttpWebResponse)webRequest.GetResponse();
-
-            if (webResponse.StatusCode == HttpStatusCode.OK) {
-                Stream responseStream = webResponse.GetResponseStream();
-
-                return ProcessResponse(responseStream);
-            }
-            else {
-                return null;
-            }
+            return PerformOperation(operation, args);
         }
 
         private Uri CreateRequestUri(string operation, JsonObject parameters) {
@@ -78,7 +63,7 @@ namespace DynamicRest {
                 Group formatGroup = m.Groups["format"];
                 Group endGroup = m.Groups["end"];
 
-                if (String.CompareOrdinal(propertyGroup.Value, "operation") == 0) {
+                if ((operation.Length != 0) && String.CompareOrdinal(propertyGroup.Value, "operation") == 0) {
                     values.Add(operation);
                 }
                 else if (_parameters != null) {
@@ -127,6 +112,30 @@ namespace DynamicRest {
 
             RestClient operationGroupClient = new RestClient(_uriFormat, _mode, operationGroup, _parameters);
             return operationGroupClient;
+        }
+
+        protected override object Invoke(InvokeAction action, params object[] args) {
+            return PerformOperation(String.Empty, args);
+        }
+
+        private object PerformOperation(string operation, params object[] args) {
+            JsonObject argsObject = null;
+            if ((args != null) && (args.Length != 0)) {
+                argsObject = (JsonObject)args[0];
+            }
+            Uri requestUri = CreateRequestUri(operation, argsObject);
+
+            HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(requestUri);
+            HttpWebResponse webResponse = (HttpWebResponse)webRequest.GetResponse();
+
+            if (webResponse.StatusCode == HttpStatusCode.OK) {
+                Stream responseStream = webResponse.GetResponseStream();
+
+                return ProcessResponse(responseStream);
+            }
+            else {
+                return null;
+            }
         }
 
         private object ProcessResponse(Stream responseStream) {

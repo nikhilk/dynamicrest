@@ -16,7 +16,7 @@ namespace Application {
 
             dynamic searchOptions = new JsonObject();
             searchOptions.Query = "seattle";
-            dynamic response = liveSearch.search(searchOptions);
+            dynamic response = liveSearch(searchOptions);
 
             dynamic results = response.SearchResponse.Web.Results;
             foreach (dynamic item in results) {

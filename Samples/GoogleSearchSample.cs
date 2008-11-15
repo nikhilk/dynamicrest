@@ -15,7 +15,7 @@ namespace Application {
 
             dynamic searchOptions = new JsonObject();
             searchOptions.q = "seattle";
-            dynamic response = googleSearch.search(searchOptions);
+            dynamic response = googleSearch(searchOptions);
 
             dynamic results = response.responseData.results;
             foreach (dynamic item in results) {
