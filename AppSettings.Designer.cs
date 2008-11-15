@@ -60,5 +60,41 @@ namespace Application {
                 return ((string)(this["AmazonSubscriptionID"]));
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://api.{operation}.live.net/json.aspx?AppId={appID}&Market=en-US&Sources=web")]
+        public string LiveSearchUri {
+            get {
+                return ((string)(this["LiveSearchUri"]));
+            }
+            set {
+                this["LiveSearchUri"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("40EA1F3C4F04BE0EA8F0461962A8F8EAC4D773D3")]
+        public string LiveSearchApiKey {
+            get {
+                return ((string)(this["LiveSearchApiKey"]));
+            }
+            set {
+                this["LiveSearchApiKey"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://ajax.googleapis.com/ajax/services/{operation}/web?v=1.0")]
+        public string GoogleSearchUri {
+            get {
+                return ((string)(this["GoogleSearchUri"]));
+            }
+            set {
+                this["GoogleSearchUri"] = value;
+            }
+        }
     }
 }

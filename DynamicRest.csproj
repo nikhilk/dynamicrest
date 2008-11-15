@@ -44,6 +44,8 @@
   <ItemGroup>
     <Compile Include="Samples\AmazonSample.cs" />
     <Compile Include="DynamicRest\RestClientMode.cs" />
+    <Compile Include="Samples\GoogleSearchSample.cs" />
+    <Compile Include="Samples\LiveSearchSample.cs" />
     <Compile Include="Samples\JsonSample.cs" />
     <Compile Include="Samples\FlickrSample.cs" />
     <Compile Include="Core\StandardActionKinds.cs" />

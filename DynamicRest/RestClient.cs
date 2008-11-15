@@ -70,32 +70,32 @@ namespace DynamicRest {
         private Uri CreateRequestUri(string operation, JsonObject parameters) {
             StringBuilder uriBuilder = new StringBuilder();
 
-            if (_parameters != null) {
-                List<object> values = new List<object>();
+            List<object> values = new List<object>();
 
-                string rewrittenUriFormat = TokenFormatRewriteRegex.Replace(_uriFormat, delegate(Match m) {
-                    Group startGroup = m.Groups["start"];
-                    Group propertyGroup = m.Groups["property"];
-                    Group formatGroup = m.Groups["format"];
-                    Group endGroup = m.Groups["end"];
+            string rewrittenUriFormat = TokenFormatRewriteRegex.Replace(_uriFormat, delegate(Match m) {
+                Group startGroup = m.Groups["start"];
+                Group propertyGroup = m.Groups["property"];
+                Group formatGroup = m.Groups["format"];
+                Group endGroup = m.Groups["end"];
 
-                    if (String.CompareOrdinal(propertyGroup.Value, "operation") == 0) {
-                        values.Add(operation);
-                    }
-                    else {
-                        values.Add(_parameters[propertyGroup.Value]);
-                    }
+                if (String.CompareOrdinal(propertyGroup.Value, "operation") == 0) {
+                    values.Add(operation);
+                }
+                else if (_parameters != null) {
+                    values.Add(_parameters[propertyGroup.Value]);
+                }
 
-                    return new string('{', startGroup.Captures.Count) + (values.Count - 1) + formatGroup.Value + new string('}', endGroup.Captures.Count);
-                });
+                return new string('{', startGroup.Captures.Count) + (values.Count - 1) + formatGroup.Value + new string('}', endGroup.Captures.Count);
+            });
 
+            if (values.Count != 0) {
                 uriBuilder.AppendFormat(CultureInfo.InvariantCulture, rewrittenUriFormat, values.ToArray()); 
             }
             else {
-                uriBuilder.Append(_uriFormat);
-                if (_uriFormat.IndexOf('?') < 0) {
-                    uriBuilder.Append("?");
-                }
+                uriBuilder.Append(rewrittenUriFormat);
+            }
+            if (rewrittenUriFormat.IndexOf('?') < 0) {
+                uriBuilder.Append("?");
             }
 
             if (parameters != null) {

@@ -14,6 +14,12 @@ namespace Application {
             // Amazon Sample
             // AmazonSample.Run();
 
+            // Live Search
+            // LiveSearchSample.Run();
+
+            // Google Search
+            // GoogleSearchSample.Run();
+
             // JSON Sample
             // JsonSample.Run();
         }
