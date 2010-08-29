@@ -5,8 +5,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Scripting.Actions;
 using System.Xml.Linq;
+using System.Dynamic;
 
 namespace DynamicRest {
 
@@ -15,38 +15,40 @@ namespace DynamicRest {
         private List<XElement> _elements;
 
         internal XmlNodeList(IEnumerable<XElement> elements)
-            : base(StandardActionKinds.GetMember | StandardActionKinds.Call |
-                   StandardActionKinds.Convert) {
+            : base() {
             _elements = new List<XElement>(elements);
         }
 
-        protected override object Convert(ConvertAction action) {
-            Type targetType = action.ToType;
-
+        public override bool TryConvert(ConvertBinder binder, out object result) {
+            Type targetType = binder.Type;
             if (targetType == typeof(IEnumerable)) {
-                return this;
+                result = this;
+                return true;
             }
-
-            return base.Convert(action);
+            return base.TryConvert(binder, out result);
         }
 
-        protected override object Call(CallAction action, params object[] args) {
-            if (String.Compare(action.Name, "Item", StringComparison.Ordinal) == 0) {
+        public override bool TryGetMember(GetMemberBinder binder, out object result) {
+            if (String.Compare("Length", binder.Name, StringComparison.Ordinal) == 0) {
+                result = _elements.Count;
+                return true;
+            }
+
+            return base.TryGetMember(binder, out result);
+        }
+
+        public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result) {
+            if (String.Compare(binder.Name, "Item", StringComparison.Ordinal) == 0) {
                 if (args.Length == 1) {
                     XElement element = _elements[System.Convert.ToInt32(args[0])];
-                    return new XmlNode(element);
+                    result = new XmlNode(element);
+                    return true;
                 }
+                result = null;
+                return false;
             }
 
-            return base.Call(action, args);
-        }
-
-        protected override object GetMember(GetMemberAction action) {
-            if (String.Compare("Length", action.Name, StringComparison.Ordinal) == 0) {
-                return _elements.Count;
-            }
-
-            return base.GetMember(action);
+            return base.TryInvokeMember(binder, args, out result);
         }
 
         #region Implementation of IEnumerable
@@ -54,6 +56,7 @@ namespace DynamicRest {
             return new NodeEnumerator(_elements.GetEnumerator());
         }
         #endregion
+
 
         private sealed class NodeEnumerator : IEnumerator {
 

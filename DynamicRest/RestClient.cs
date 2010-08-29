@@ -4,10 +4,10 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Dynamic;
 using System.Globalization;
 using System.IO;
 using System.Net;
-using System.Scripting.Actions;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
@@ -15,11 +15,13 @@ using System.Xml.Linq;
 
 namespace DynamicRest {
 
+    // TODO: Add async support
+
     public sealed class RestClient : DynamicObject {
 
         private static readonly Regex TokenFormatRewriteRegex =
             new Regex(@"(?<start>\{)+(?<property>[\w\.\[\]]+)(?<format>:[^}]+)?(?<end>\})+",
-                       RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant); 
+                      RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
         private static readonly Regex StripXmlnsRegex =
             new Regex(@"(xmlns:?[^=]*=[""][^""]*[""])",
@@ -27,29 +29,24 @@ namespace DynamicRest {
 
         private string _uriFormat;
         private RestClientMode _mode;
+        private IRestUriTransformer _uriTransformer;
         private string _operationGroup;
         private Dictionary<string, object> _parameters;
 
-        public RestClient(string uriFormat, RestClientMode mode)
-            : base(StandardActionKinds.GetMember | StandardActionKinds.SetMember |
-                   StandardActionKinds.Call | StandardActionKinds.Invoke) {
+        public RestClient(string uriFormat, RestClientMode mode) {
             _uriFormat = uriFormat;
             _mode = mode;
+        }
+
+        public RestClient(string uriFormat, RestClientMode mode, IRestUriTransformer uriTransformer)
+            : this(uriFormat, mode) {
+            _uriTransformer = uriTransformer;
         }
 
         private RestClient(string uriFormat, RestClientMode mode, string operationGroup, Dictionary<string, object> inheritedParameters)
             : this(uriFormat, mode) {
             _operationGroup = operationGroup;
             _parameters = inheritedParameters;
-        }
-
-        protected override object Call(CallAction action, params object[] args) {
-            string operation = action.Name;
-            if (_operationGroup != null) {
-                operation = _operationGroup + "." + operation;
-            }
-
-            return PerformOperation(operation, args);
         }
 
         private Uri CreateRequestUri(string operation, JsonObject parameters) {
@@ -74,7 +71,7 @@ namespace DynamicRest {
             });
 
             if (values.Count != 0) {
-                uriBuilder.AppendFormat(CultureInfo.InvariantCulture, rewrittenUriFormat, values.ToArray()); 
+                uriBuilder.AppendFormat(CultureInfo.InvariantCulture, rewrittenUriFormat, values.ToArray());
             }
             else {
                 uriBuilder.Append(rewrittenUriFormat);
@@ -86,36 +83,11 @@ namespace DynamicRest {
             if (parameters != null) {
                 foreach (KeyValuePair<string, object> param in (IDictionary<string, object>)parameters) {
                     string value = String.Format(CultureInfo.InvariantCulture, "{0}", param.Value);
-                    value = HttpUtility.UrlEncode(value);
-
-                    uriBuilder.AppendFormat("&{0}={1}", param.Key, value);
+                    uriBuilder.AppendFormat("&{0}={1}", param.Key, HttpUtility.UrlEncode(value));
                 }
             }
 
             return new Uri(uriBuilder.ToString(), UriKind.Absolute);
-        }
-
-        protected override object GetMember(GetMemberAction action) {
-            if (_parameters == null) {
-                _parameters = new Dictionary<string, object>();
-            }
-
-            object value;
-            if (_parameters.TryGetValue(action.Name, out value)) {
-                return value;
-            }
-
-            string operationGroup = action.Name;
-            if (_operationGroup != null) {
-                operationGroup = _operationGroup + "." + operationGroup;
-            }
-
-            RestClient operationGroupClient = new RestClient(_uriFormat, _mode, operationGroup, _parameters);
-            return operationGroupClient;
-        }
-
-        protected override object Invoke(InvokeAction action, params object[] args) {
-            return PerformOperation(String.Empty, args);
         }
 
         private object PerformOperation(string operation, params object[] args) {
@@ -123,7 +95,11 @@ namespace DynamicRest {
             if ((args != null) && (args.Length != 0)) {
                 argsObject = (JsonObject)args[0];
             }
+
             Uri requestUri = CreateRequestUri(operation, argsObject);
+            if (_uriTransformer != null) {
+                requestUri = _uriTransformer.TransformUri(requestUri);
+            }
 
             HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(requestUri);
             HttpWebResponse webResponse = (HttpWebResponse)webRequest.GetResponse();
@@ -160,11 +136,50 @@ namespace DynamicRest {
             return result;
         }
 
-        protected override void SetMember(SetMemberAction action, object value) {
+        public override bool TryGetMember(GetMemberBinder binder, out object result) {
             if (_parameters == null) {
                 _parameters = new Dictionary<string, object>();
             }
-            _parameters[action.Name] = value;
+
+            object value;
+            if (_parameters.TryGetValue(binder.Name, out value)) {
+                result = value;
+                return true;
+            }
+
+            string operationGroup = binder.Name;
+            if (_operationGroup != null) {
+                operationGroup = _operationGroup + "." + operationGroup;
+            }
+
+            RestClient operationGroupClient =
+                new RestClient(_uriFormat, _mode, operationGroup, _parameters);
+
+            result = operationGroupClient;
+            return true;
+        }
+
+        public override bool TryInvoke(InvokeBinder binder, object[] args, out object result) {
+            result = PerformOperation(String.Empty, args);
+            return true;
+        }
+
+        public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result) {
+            string operation = binder.Name;
+            if (_operationGroup != null) {
+                operation = _operationGroup + "." + operation;
+            }
+
+            result = PerformOperation(operation, args);
+            return true;
+        }
+
+        public override bool TrySetMember(SetMemberBinder binder, object value) {
+            if (_parameters == null) {
+                _parameters = new Dictionary<string, object>();
+            }
+            _parameters[binder.Name] = value;
+            return true;
         }
     }
 }

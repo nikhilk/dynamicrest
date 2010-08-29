@@ -4,9 +4,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Scripting.Actions;
 using System.Text;
 using System.Xml.Linq;
+using System.Dynamic;
 
 namespace DynamicRest {
 
@@ -14,16 +14,68 @@ namespace DynamicRest {
 
         private XElement _element;
 
-        public XmlNode(string name) : this(new XElement(name)) {
+        public XmlNode(string name)
+            : this(new XElement(name)) {
         }
 
-        public XmlNode(XElement element)
-            : base(StandardActionKinds.GetMember | StandardActionKinds.SetMember | StandardActionKinds.Call) {
+        public XmlNode(XElement element) {
             _element = element;
         }
 
-        protected override object Call(CallAction action, params object[] args) {
-            string name = action.Name;
+        public override bool TryGetMember(GetMemberBinder binder, out object result) {
+            string name = binder.Name;
+
+            if (String.CompareOrdinal(name, "Name") == 0) {
+                result = _element.Name.LocalName;
+                return true;
+            }
+            else if (String.CompareOrdinal(name, "Parent") == 0) {
+                XElement parent = _element.Parent;
+                if (parent != null) {
+                    result = new XmlNode(parent);
+                    return true;
+                }
+                result = null;
+                return false;
+            }
+            else if (String.CompareOrdinal(name, "Value") == 0) {
+                result = _element.Value;
+                return true;
+            }
+            else if (String.CompareOrdinal(name, "Nodes") == 0) {
+                result = new XmlNodeList(_element.Elements());
+                return true;
+            }
+            else if (String.CompareOrdinal(name, "Xml") == 0) {
+                StringWriter sw = new StringWriter();
+                _element.Save(sw, SaveOptions.None);
+
+                result = sw.ToString();
+                return true;
+            }
+            else {
+                XAttribute attribute = _element.Attribute(name);
+                if (attribute != null) {
+                    result = attribute.Value;
+                    return true;
+                }
+
+                XElement childNode = _element.Element(name);
+                if (childNode != null) {
+                    if (childNode.HasElements == false) {
+                        result = childNode.Value;
+                        return true;
+                    }
+                    result = new XmlNode(childNode);
+                    return true;
+                }
+            }
+
+            return base.TryGetMember(binder, out result);
+        }
+
+        public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result) {
+            string name = binder.Name;
 
             if (String.CompareOrdinal(name, "SelectAll") == 0) {
                 IEnumerable<XElement> selectedElements = null;
@@ -31,11 +83,15 @@ namespace DynamicRest {
                 if (args.Length == 0) {
                     selectedElements = _element.Descendants();
                 }
-                else {
+                else if (args.Length == 1) {
                     selectedElements = _element.Descendants(args[0].ToString());
                 }
-
-                return new XmlNodeList(selectedElements);
+                else {
+                    result = false;
+                    return false;
+                }
+                result = new XmlNodeList(selectedElements);
+                return true;
             }
             else if (String.CompareOrdinal(name, "SelectChildren") == 0) {
                 IEnumerable<XElement> selectedElements = null;
@@ -43,67 +99,29 @@ namespace DynamicRest {
                 if (args.Length == 0) {
                     selectedElements = _element.Elements();
                 }
-                else {
+                else if (args.Length == 1) {
                     selectedElements = _element.Elements(args[0].ToString());
                 }
-
-                return new XmlNodeList(selectedElements);
+                else {
+                    result = false;
+                    return false;
+                }
+                result = new XmlNodeList(selectedElements);
+                return true;
             }
 
-            return base.Call(action, args);
+            return base.TryInvokeMember(binder, args, out result);
         }
 
-        protected override object GetMember(GetMemberAction action) {
-            string name = action.Name;
-
-            if (String.CompareOrdinal(name, "Name") == 0) {
-                return _element.Name.LocalName;
-            }
-            else if (String.CompareOrdinal(name, "Parent") == 0) {
-                XElement parent = _element.Parent;
-                if (parent != null) {
-                    return new XmlNode(parent);
-                }
-                return null;
-            }
-            else if (String.CompareOrdinal(name, "Value") == 0) {
-                return _element.Value;
-            }
-            else if (String.CompareOrdinal(name, "Nodes") == 0) {
-                return new XmlNodeList(_element.Elements());
-            }
-            else if (String.CompareOrdinal(name, "Xml") == 0) {
-                StringWriter sw = new StringWriter();
-                _element.Save(sw, SaveOptions.None);
-
-                return sw.ToString();
-            }
-            else {
-                XAttribute attribute = _element.Attribute(name);
-                if (attribute != null) {
-                    return attribute.Value;
-                }
-
-                XElement childNode = _element.Element(name);
-                if (childNode != null) {
-                    if (childNode.HasElements == false) {
-                        return childNode.Value;
-                    }
-                    return new XmlNode(childNode);
-                }
-            }
-
-            return base.GetMember(action);
-        }
-
-        protected override void SetMember(SetMemberAction action, object value) {
-            string name = action.Name;
+        public override bool TrySetMember(SetMemberBinder binder, object value) {
+            string name = binder.Name;
 
             if (String.CompareOrdinal(name, "Value") == 0) {
                 _element.Value = (value != null) ? value.ToString() : String.Empty;
+                return true;
             }
 
-            base.SetMember(action, value);
+            return base.TrySetMember(binder, value);
         }
     }
 }

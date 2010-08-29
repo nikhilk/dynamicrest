@@ -5,7 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Scripting.Actions;
+using System.Dynamic;
 
 namespace DynamicRest {
 
@@ -13,9 +13,7 @@ namespace DynamicRest {
 
         private Dictionary<string, object> _members;
 
-        public JsonObject()
-            : base(StandardActionKinds.GetMember | StandardActionKinds.SetMember | StandardActionKinds.DeleteMember |
-                   StandardActionKinds.Convert) {
+        public JsonObject() {
             _members = new Dictionary<string, object>();
         }
 
@@ -36,33 +34,49 @@ namespace DynamicRest {
             }
         }
 
-        protected override object Convert(ConvertAction action) {
-            Type targetType = action.ToType;
+        public object this[string key] {
+            get {
+                return ((IDictionary<string, object>)this)[key];
+            }
+            set {
+                ((IDictionary<string, object>)this)[key] = value;
+            }
+        }
+
+        public bool ContainsKey(string key) {
+            return ((IDictionary<string, object>)this).ContainsKey(key);
+        }
+
+        public override bool TryConvert(ConvertBinder binder, out object result) {
+            Type targetType = binder.Type;
 
             if ((targetType == typeof(IEnumerable)) ||
                 (targetType == typeof(IEnumerable<KeyValuePair<string, object>>)) ||
                 (targetType == typeof(IDictionary<string, object>)) ||
                 (targetType == typeof(IDictionary))) {
-                return this;
+                result = this;
+                return true;
             }
 
-            return base.Convert(action);
+            return base.TryConvert(binder, out result);
         }
 
-        protected override bool DeleteMember(DeleteMemberAction action) {
-            return _members.Remove(action.Name);
+        public override bool TryDeleteMember(DeleteMemberBinder binder) {
+            return _members.Remove(binder.Name);
         }
 
-        protected override object GetMember(GetMemberAction action) {
+        public override bool TryGetMember(GetMemberBinder binder, out object result) {
             object value;
-            if (_members.TryGetValue(action.Name, out value)) {
-                return value;
+            if (_members.TryGetValue(binder.Name, out value)) {
+                result = value;
+                return true;
             }
-            return base.GetMember(action);
+            return base.TryGetMember(binder, out result);
         }
 
-        protected override void SetMember(SetMemberAction action, object value) {
-            _members[action.Name] = value;
+        public override bool TrySetMember(SetMemberBinder binder, object value) {
+            _members[binder.Name] = value;
+            return true;
         }
 
         #region Implementation of IEnumerable
@@ -156,10 +170,10 @@ namespace DynamicRest {
 
         object IDictionary.this[object key] {
             get {
-                return _members[(string)key];
+                return ((IDictionary<string, object>)this)[(string)key];
             }
             set {
-                _members[(string)key] = value;
+                ((IDictionary<string, object>)this)[(string)key] = value;
             }
         }
 
@@ -199,7 +213,11 @@ namespace DynamicRest {
 
         object IDictionary<string, object>.this[string key] {
             get {
-                return _members[key];
+                object value = null;
+                if (_members.TryGetValue(key, out value)) {
+                    return value;
+                }
+                return null;
             }
             set {
                 _members[key] = value;

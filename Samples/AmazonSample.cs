@@ -9,8 +9,8 @@ namespace Application {
     internal static class AmazonSample {
 
         public static void Run() {
-            dynamic amazon = new RestClient(AppSettings.Default.AmazonUri, RestClientMode.Xml);
-            amazon.subscriptionID = AppSettings.Default.AmazonSubscriptionID;
+            AmazonUriSigner signer = new AmazonUriSigner(Services.AmazonAccessKey, Services.AmazonSecretKey);
+            dynamic amazon = new RestClient(Services.AmazonUri, RestClientMode.Xml, signer);
 
             dynamic searchOptions = new JsonObject();
             searchOptions.SearchIndex = "Books";

@@ -12,6 +12,9 @@ using System.Text;
 
 namespace DynamicRest {
 
+    // TODO: Add date serialization options
+    //       ScriptDate, Ticks, Formatted, Object
+
     public sealed class JsonWriter {
 
         private StringWriter _internalWriter;
@@ -371,7 +374,7 @@ namespace DynamicRest {
                     NewLine = "\r";
                 }
 
-                _tabString = "    ";
+                _tabString = "  ";
                 _indentLevel = 0;
                 _tabsPending = false;
             }

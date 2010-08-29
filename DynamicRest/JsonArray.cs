@@ -5,7 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Scripting.Actions;
+using System.Dynamic;
 
 namespace DynamicRest {
 
@@ -13,9 +13,7 @@ namespace DynamicRest {
 
         private List<object> _members;
 
-        public JsonArray()
-            : base(StandardActionKinds.GetMember | StandardActionKinds.Call |
-                   StandardActionKinds.Convert) {
+        public JsonArray() {
             _members = new List<object>();
         }
 
@@ -35,61 +33,112 @@ namespace DynamicRest {
             _members.AddRange(objects);
         }
 
-        protected override object Convert(ConvertAction action) {
-            Type targetType = action.ToType;
+        public int Count {
+            get {
+                return _members.Count;
+            }
+        }
+
+        public object this[int index] {
+            get {
+                return _members[index];
+            }
+        }
+
+        public override bool TryConvert(ConvertBinder binder, out object result) {
+            Type targetType = binder.Type;
 
             if ((targetType == typeof(IEnumerable)) ||
                 (targetType == typeof(IEnumerable<object>)) ||
                 (targetType == typeof(ICollection<object>)) ||
                 (targetType == typeof(ICollection))) {
-                return this;
+                result = this;
+                return true;
             }
 
-            return base.Convert(action);
+            return base.TryConvert(binder, out result);
         }
 
-        protected override object Call(CallAction action, params object[] args) {
-            if (String.Compare(action.Name, "Item", StringComparison.Ordinal) == 0) {
+        public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result) {
+            if (String.Compare(binder.Name, "Item", StringComparison.Ordinal) == 0) {
                 if (args.Length == 1) {
-                    return _members[System.Convert.ToInt32(args[0])];
+                    result = _members[System.Convert.ToInt32(args[0])];
+                    return true;
                 }
                 else if (args.Length == 2) {
                     _members[System.Convert.ToInt32(args[0])] = args[1];
-                    return null;
+                    result = null;
+                    return true;
+                }
+                else {
+                    result = null;
+                    return false;
                 }
             }
-            else if (String.Compare(action.Name, "Add", StringComparison.Ordinal) == 0) {
-                _members.Add(args[0]);
-                return null;
+            else if (String.Compare(binder.Name, "Add", StringComparison.Ordinal) == 0) {
+                if (args.Length == 1) {
+                    _members.Add(args[0]);
+                    result = null;
+                    return true;
+                }
+                result = null;
+                return false;
             }
-            else if (String.Compare(action.Name, "Insert", StringComparison.Ordinal) == 0) {
-                _members.Insert(System.Convert.ToInt32(args[0]), args[1]);
-                return null;
+            else if (String.Compare(binder.Name, "Insert", StringComparison.Ordinal) == 0) {
+                if (args.Length == 2) {
+                    _members.Insert(System.Convert.ToInt32(args[0]), args[1]);
+                    result = null;
+                    return true;
+                }
+                result = null;
+                return false;
             }
-            else if (String.Compare(action.Name, "IndexOf", StringComparison.Ordinal) == 0) {
-                return _members.IndexOf(args[0]);
+            else if (String.Compare(binder.Name, "IndexOf", StringComparison.Ordinal) == 0) {
+                if (args.Length == 1) {
+                    result = _members.IndexOf(args[0]);
+                    return true;
+                }
+                result = null;
+                return false;
             }
-            else if (String.Compare(action.Name, "Clear", StringComparison.Ordinal) == 0) {
-                _members.Clear();
-                return null;
+            else if (String.Compare(binder.Name, "Clear", StringComparison.Ordinal) == 0) {
+                if (args.Length == 0) {
+                    _members.Clear();
+                    result = null;
+                    return true;
+                }
+                result = null;
+                return false;
             }
-            else if (String.Compare(action.Name, "Remove", StringComparison.Ordinal) == 0) {
-                return _members.Remove(args[0]);
+            else if (String.Compare(binder.Name, "Remove", StringComparison.Ordinal) == 0) {
+                if (args.Length == 1) {
+                    result = _members.Remove(args[0]);
+                    ;
+                    return true;
+                }
+                result = null;
+                return false;
             }
-            else if (String.Compare(action.Name, "RemoveAt", StringComparison.Ordinal) == 0) {
-                _members.RemoveAt(System.Convert.ToInt32(args[0]));
-                return null;
+            else if (String.Compare(binder.Name, "RemoveAt", StringComparison.Ordinal) == 0) {
+                if (args.Length == 1) {
+                    _members.RemoveAt(System.Convert.ToInt32(args[0]));
+                    result = null;
+                    return true;
+                }
+                result = null;
+                return false;
             }
 
-            return base.Call(action, args);
+            return base.TryInvokeMember(binder, args, out result);
         }
 
-        protected override object GetMember(GetMemberAction action) {
-            if (String.Compare("Length", action.Name, StringComparison.Ordinal) == 0) {
-                return _members.Count;
+        public override bool TryGetMember(GetMemberBinder binder, out object result) {
+            if (String.Compare("Length", binder.Name, StringComparison.Ordinal) == 0) {
+                result = _members.Count;
+                return true;
             }
 
-            return base.GetMember(action);
+            return base.TryGetMember(binder, out result);
         }
 
         #region Implementation of IEnumerable

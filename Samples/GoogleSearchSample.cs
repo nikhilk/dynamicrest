@@ -9,7 +9,7 @@ namespace Application {
     internal static class GoogleSearchSample {
 
         public static void Run() {
-            dynamic googleSearch = new RestClient(AppSettings.Default.GoogleSearchUri, RestClientMode.Json);
+            dynamic googleSearch = new RestClient(Services.GoogleSearchUri, RestClientMode.Json);
 
             Console.WriteLine("Searching Google for 'seattle'...");
 

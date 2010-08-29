@@ -31,6 +31,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -42,14 +43,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DynamicRest\IRestUriTransformer.cs" />
+    <Compile Include="Samples\AmazonUriSigner.cs" />
+    <Compile Include="Services.cs" />
     <Compile Include="Samples\AmazonSample.cs" />
     <Compile Include="DynamicRest\RestClientMode.cs" />
     <Compile Include="Samples\GoogleSearchSample.cs" />
-    <Compile Include="Samples\LiveSearchSample.cs" />
+    <Compile Include="Samples\BingSearchSample.cs" />
     <Compile Include="Samples\JsonSample.cs" />
     <Compile Include="Samples\FlickrSample.cs" />
-    <Compile Include="Core\StandardActionKinds.cs" />
-    <Compile Include="Core\DynamicObject.cs" />
     <Compile Include="DynamicRest\JsonArray.cs" />
     <Compile Include="DynamicRest\JsonObject.cs" />
     <Compile Include="DynamicRest\JsonReader.cs" />
@@ -61,18 +63,6 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="AppSettings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <DependentUpon>AppSettings.settings</DependentUpon>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
-    <None Include="AppSettings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>AppSettings.Designer.cs</LastGenOutput>
-    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
