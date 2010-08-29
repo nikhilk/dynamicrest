@@ -28,6 +28,16 @@ namespace DynamicRest {
             return base.TryConvert(binder, out result);
         }
 
+        public override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object result) {
+            if (indexes.Length == 1) {
+                XElement element = _elements[Convert.ToInt32(indexes[0])];
+                result = new XmlNode(element);
+                return true;
+            }
+
+            return base.TryGetIndex(binder, indexes, out result);
+        }
+
         public override bool TryGetMember(GetMemberBinder binder, out object result) {
             if (String.Compare("Length", binder.Name, StringComparison.Ordinal) == 0) {
                 result = _elements.Count;
@@ -35,20 +45,6 @@ namespace DynamicRest {
             }
 
             return base.TryGetMember(binder, out result);
-        }
-
-        public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result) {
-            if (String.Compare(binder.Name, "Item", StringComparison.Ordinal) == 0) {
-                if (args.Length == 1) {
-                    XElement element = _elements[System.Convert.ToInt32(args[0])];
-                    result = new XmlNode(element);
-                    return true;
-                }
-                result = null;
-                return false;
-            }
-
-            return base.TryInvokeMember(binder, args, out result);
         }
 
         #region Implementation of IEnumerable
