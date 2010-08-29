@@ -60,22 +60,7 @@ namespace DynamicRest {
         }
 
         public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result) {
-            if (String.Compare(binder.Name, "Item", StringComparison.Ordinal) == 0) {
-                if (args.Length == 1) {
-                    result = _members[System.Convert.ToInt32(args[0])];
-                    return true;
-                }
-                else if (args.Length == 2) {
-                    _members[System.Convert.ToInt32(args[0])] = args[1];
-                    result = null;
-                    return true;
-                }
-                else {
-                    result = null;
-                    return false;
-                }
-            }
-            else if (String.Compare(binder.Name, "Add", StringComparison.Ordinal) == 0) {
+            if (String.Compare(binder.Name, "Add", StringComparison.Ordinal) == 0) {
                 if (args.Length == 1) {
                     _members.Add(args[0]);
                     result = null;
@@ -86,7 +71,7 @@ namespace DynamicRest {
             }
             else if (String.Compare(binder.Name, "Insert", StringComparison.Ordinal) == 0) {
                 if (args.Length == 2) {
-                    _members.Insert(System.Convert.ToInt32(args[0]), args[1]);
+                    _members.Insert(Convert.ToInt32(args[0]), args[1]);
                     result = null;
                     return true;
                 }
@@ -113,7 +98,6 @@ namespace DynamicRest {
             else if (String.Compare(binder.Name, "Remove", StringComparison.Ordinal) == 0) {
                 if (args.Length == 1) {
                     result = _members.Remove(args[0]);
-                    ;
                     return true;
                 }
                 result = null;
@@ -121,7 +105,7 @@ namespace DynamicRest {
             }
             else if (String.Compare(binder.Name, "RemoveAt", StringComparison.Ordinal) == 0) {
                 if (args.Length == 1) {
-                    _members.RemoveAt(System.Convert.ToInt32(args[0]));
+                    _members.RemoveAt(Convert.ToInt32(args[0]));
                     result = null;
                     return true;
                 }
@@ -132,6 +116,15 @@ namespace DynamicRest {
             return base.TryInvokeMember(binder, args, out result);
         }
 
+        public override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object result) {
+            if (indexes.Length == 1) {
+                result = _members[Convert.ToInt32(indexes[0])];
+                return true;
+            }
+
+            return base.TryGetIndex(binder, indexes, out result);
+        }
+
         public override bool TryGetMember(GetMemberBinder binder, out object result) {
             if (String.Compare("Length", binder.Name, StringComparison.Ordinal) == 0) {
                 result = _members.Count;
@@ -139,6 +132,15 @@ namespace DynamicRest {
             }
 
             return base.TryGetMember(binder, out result);
+        }
+
+        public override bool TrySetIndex(SetIndexBinder binder, object[] indexes, object value) {
+            if (indexes.Length == 1) {
+                _members[Convert.ToInt32(indexes[0])] = value;
+                return true;
+            }
+
+            return base.TrySetIndex(binder, indexes, value);
         }
 
         #region Implementation of IEnumerable

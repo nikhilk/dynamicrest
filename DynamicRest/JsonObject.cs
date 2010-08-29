@@ -65,6 +65,15 @@ namespace DynamicRest {
             return _members.Remove(binder.Name);
         }
 
+        public override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object result) {
+            if (indexes.Length == 1) {
+                result = ((IDictionary<string, object>)this)[(string)indexes[0]];
+                return true;
+            }
+
+            return base.TryGetIndex(binder, indexes, out result);
+        }
+
         public override bool TryGetMember(GetMemberBinder binder, out object result) {
             object value;
             if (_members.TryGetValue(binder.Name, out value)) {
@@ -72,6 +81,15 @@ namespace DynamicRest {
                 return true;
             }
             return base.TryGetMember(binder, out result);
+        }
+
+        public override bool TrySetIndex(SetIndexBinder binder, object[] indexes, object value) {
+            if (indexes.Length == 1) {
+                ((IDictionary<string, object>)this)[(string)indexes[0]] = value;
+                return true;
+            }
+
+            return base.TrySetIndex(binder, indexes, value);
         }
 
         public override bool TrySetMember(SetMemberBinder binder, object value) {

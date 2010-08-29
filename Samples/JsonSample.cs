@@ -15,7 +15,7 @@ namespace Application {
             dynamic jsonObject = jsonReader.ReadValue();
             dynamic items = jsonObject.items;
 
-            items.Item(2, 1001);
+            items[2] = 1001;
 
             dynamic bar = new JsonObject();
             bar.name = "c#";
