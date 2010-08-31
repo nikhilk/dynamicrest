@@ -43,11 +43,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DynamicRest\RestCallback.cs" />
+    <Compile Include="DynamicRest\RestOperation.cs" />
     <Compile Include="DynamicRest\IRestUriTransformer.cs" />
     <Compile Include="Samples\AmazonUriSigner.cs" />
     <Compile Include="Services.cs" />
     <Compile Include="Samples\AmazonSample.cs" />
-    <Compile Include="DynamicRest\RestClientMode.cs" />
+    <Compile Include="DynamicRest\RestService.cs" />
     <Compile Include="Samples\GoogleSearchSample.cs" />
     <Compile Include="Samples\BingSearchSample.cs" />
     <Compile Include="Samples\JsonSample.cs" />

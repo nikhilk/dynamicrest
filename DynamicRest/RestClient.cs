@@ -15,8 +15,6 @@ using System.Xml.Linq;
 
 namespace DynamicRest {
 
-    // TODO: Add async support
-
     public sealed class RestClient : DynamicObject {
 
         private static readonly Regex TokenFormatRewriteRegex =
@@ -28,28 +26,28 @@ namespace DynamicRest {
                       RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
         private string _uriFormat;
-        private RestClientMode _mode;
+        private RestService _service;
         private IRestUriTransformer _uriTransformer;
         private string _operationGroup;
         private Dictionary<string, object> _parameters;
 
-        public RestClient(string uriFormat, RestClientMode mode) {
+        public RestClient(string uriFormat, RestService service) {
             _uriFormat = uriFormat;
-            _mode = mode;
+            _service = service;
         }
 
-        public RestClient(string uriFormat, RestClientMode mode, IRestUriTransformer uriTransformer)
-            : this(uriFormat, mode) {
+        public RestClient(string uriFormat, RestService service, IRestUriTransformer uriTransformer)
+            : this(uriFormat, service) {
             _uriTransformer = uriTransformer;
         }
 
-        private RestClient(string uriFormat, RestClientMode mode, string operationGroup, Dictionary<string, object> inheritedParameters)
-            : this(uriFormat, mode) {
+        private RestClient(string uriFormat, RestService service, string operationGroup, Dictionary<string, object> inheritedParameters)
+            : this(uriFormat, service) {
             _operationGroup = operationGroup;
             _parameters = inheritedParameters;
         }
 
-        private Uri CreateRequestUri(string operation, JsonObject parameters) {
+        private Uri CreateRequestUri(string operationName, JsonObject parameters) {
             StringBuilder uriBuilder = new StringBuilder();
 
             List<object> values = new List<object>();
@@ -60,8 +58,8 @@ namespace DynamicRest {
                 Group formatGroup = m.Groups["format"];
                 Group endGroup = m.Groups["end"];
 
-                if ((operation.Length != 0) && String.CompareOrdinal(propertyGroup.Value, "operation") == 0) {
-                    values.Add(operation);
+                if ((operationName.Length != 0) && String.CompareOrdinal(propertyGroup.Value, "operation") == 0) {
+                    values.Add(operationName);
                 }
                 else if (_parameters != null) {
                     values.Add(_parameters[propertyGroup.Value]);
@@ -82,36 +80,100 @@ namespace DynamicRest {
 
             if (parameters != null) {
                 foreach (KeyValuePair<string, object> param in (IDictionary<string, object>)parameters) {
+                    if (param.Value is Delegate) {
+                        continue;
+                    }
+
                     string value = String.Format(CultureInfo.InvariantCulture, "{0}", param.Value);
                     uriBuilder.AppendFormat("&{0}={1}", param.Key, HttpUtility.UrlEncode(value));
                 }
             }
 
-            return new Uri(uriBuilder.ToString(), UriKind.Absolute);
+            Uri uri = new Uri(uriBuilder.ToString(), UriKind.Absolute);
+            if (_uriTransformer != null) {
+                uri = _uriTransformer.TransformUri(uri);
+            }
+
+            return uri;
         }
 
-        private object PerformOperation(string operation, params object[] args) {
+        private RestOperation PerformOperation(string operationName, params object[] args) {
             JsonObject argsObject = null;
             if ((args != null) && (args.Length != 0)) {
                 argsObject = (JsonObject)args[0];
             }
 
-            Uri requestUri = CreateRequestUri(operation, argsObject);
-            if (_uriTransformer != null) {
-                requestUri = _uriTransformer.TransformUri(requestUri);
-            }
+            RestOperation operation = new RestOperation();
 
+            Uri requestUri = CreateRequestUri(operationName, argsObject);
             HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(requestUri);
             HttpWebResponse webResponse = (HttpWebResponse)webRequest.GetResponse();
 
             if (webResponse.StatusCode == HttpStatusCode.OK) {
                 Stream responseStream = webResponse.GetResponseStream();
 
-                return ProcessResponse(responseStream);
+                try {
+                    object result = ProcessResponse(responseStream);
+                    operation.Complete(result,
+                                       webResponse.StatusCode, webResponse.StatusDescription);
+                }
+                catch (Exception e) {
+                    operation.Complete(new WebException(e.Message, e),
+                                       webResponse.StatusCode, webResponse.StatusDescription);
+                }
             }
             else {
-                return null;
+                operation.Complete(new WebException(webResponse.StatusDescription),
+                                   webResponse.StatusCode, webResponse.StatusDescription);
             }
+
+            return operation;
+        }
+
+        private RestOperation PerformOperationAsync(string operationName, params object[] args) {
+            RestCallback callback = null;
+
+            JsonObject argsObject = null;
+            if ((args != null) && (args.Length != 0)) {
+                argsObject = (JsonObject)args[0];
+            }
+
+            if (argsObject != null) {
+                callback = (RestCallback)argsObject["callback"];
+            }
+            if (callback == null) {
+                throw new InvalidOperationException("Async invocations must include a completion callback.");
+            }
+
+            RestOperation operation = new RestOperation();
+
+            Uri requestUri = CreateRequestUri(operationName, argsObject);
+            HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(requestUri);
+
+            webRequest.BeginGetResponse((ar) => {
+                HttpWebResponse webResponse = (HttpWebResponse)webRequest.EndGetResponse(ar);
+                if (webResponse.StatusCode == HttpStatusCode.OK) {
+                    Stream responseStream = webResponse.GetResponseStream();
+
+                    try {
+                        object result = ProcessResponse(responseStream);
+                        operation.Complete(result,
+                                           webResponse.StatusCode, webResponse.StatusDescription);
+                    }
+                    catch (Exception e) {
+                        operation.Complete(new WebException(e.Message, e),
+                                           webResponse.StatusCode, webResponse.StatusDescription);
+                    }
+                }
+                else {
+                    operation.Complete(new WebException(webResponse.StatusDescription),
+                                       webResponse.StatusCode, webResponse.StatusDescription);
+                }
+
+                callback(operation);
+            }, null);
+
+            return operation;
         }
 
         private object ProcessResponse(Stream responseStream) {
@@ -119,7 +181,7 @@ namespace DynamicRest {
 
             try {
                 string responseText = (new StreamReader(responseStream)).ReadToEnd();
-                if (_mode == RestClientMode.Json) {
+                if (_service == RestService.Json) {
                     JsonReader jsonReader = new JsonReader(responseText);
                     result = jsonReader.ReadValue();
                 }
@@ -153,24 +215,31 @@ namespace DynamicRest {
             }
 
             RestClient operationGroupClient =
-                new RestClient(_uriFormat, _mode, operationGroup, _parameters);
+                new RestClient(_uriFormat, _service, operationGroup, _parameters);
 
             result = operationGroupClient;
             return true;
         }
 
-        public override bool TryInvoke(InvokeBinder binder, object[] args, out object result) {
-            result = PerformOperation(String.Empty, args);
-            return true;
-        }
-
         public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result) {
+            bool async = false;
+
             string operation = binder.Name;
+            if (operation.EndsWith("Async", StringComparison.Ordinal)) {
+                async = true;
+                operation = operation.Substring(0, operation.Length - 5);
+            }
+
             if (_operationGroup != null) {
                 operation = _operationGroup + "." + operation;
             }
 
-            result = PerformOperation(operation, args);
+            if (async == false) {
+                result = PerformOperation(operation, args);
+            }
+            else {
+                result = PerformOperationAsync(operation, args);
+            }
             return true;
         }
 

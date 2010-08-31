@@ -1,11 +1,11 @@
-﻿// RestClientMode.cs
+﻿// RestService.cs
 //
 
 using System;
 
 namespace DynamicRest {
 
-    public enum RestClientMode {
+    public enum RestService {
 
         Json,
 

@@ -9,7 +9,7 @@ namespace Application {
     internal static class BingSearchSample {
 
         public static void Run() {
-            dynamic bingSearch = new RestClient(Services.BingSearchUri, RestClientMode.Json);
+            dynamic bingSearch = new RestClient(Services.BingSearchUri, RestService.Json);
             bingSearch.appID = Services.BingApiKey;
 
             Console.WriteLine("Searching Live for 'seattle'...");
@@ -17,9 +17,9 @@ namespace Application {
             dynamic searchOptions = new JsonObject();
             searchOptions.Query = "seattle";
 
-            dynamic response = bingSearch(searchOptions);
+            dynamic search = bingSearch.invoke(searchOptions);
+            dynamic results = search.Result.SearchResponse.Web.Results;
 
-            dynamic results = response.SearchResponse.Web.Results;
             foreach (dynamic item in results) {
                 Console.WriteLine(item.Title);
                 Console.WriteLine(item.DisplayUrl);

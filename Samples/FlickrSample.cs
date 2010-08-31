@@ -18,7 +18,7 @@ namespace Application {
         }
 
         public static void Run() {
-            dynamic flickr = new RestClient(Services.FlickrUri, RestClientMode.Json);
+            dynamic flickr = new RestClient(Services.FlickrUri, RestService.Json);
             flickr.apiKey = Services.FlickrApiKey;
 
             Console.WriteLine("Searching photos tagged with 'seattle'...");
@@ -26,8 +26,9 @@ namespace Application {
             dynamic photosOptions = new JsonObject();
             photosOptions.tags = "seattle";
             photosOptions.per_page = 4;
-            dynamic searchResponse = flickr.Photos.Search(photosOptions);
-            WritePhotos(searchResponse);
+
+            dynamic search = flickr.Photos.Search(photosOptions);
+            WritePhotos(search.Result);
 
             Console.WriteLine();
             Console.WriteLine();
@@ -36,8 +37,9 @@ namespace Application {
 
             dynamic interestingnessOptions = new JsonObject();
             interestingnessOptions.per_page = 4;
-            dynamic interestingList = flickr.Interestingness.GetList(interestingnessOptions);
-            WritePhotos(interestingList);
+
+            dynamic listing = flickr.Interestingness.GetList(interestingnessOptions);
+            WritePhotos(listing.Result);
         }
     }
 }
