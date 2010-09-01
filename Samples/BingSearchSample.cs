@@ -12,17 +12,25 @@ namespace Application {
             dynamic bingSearch = new RestClient(Services.BingSearchUri, RestService.Json);
             bingSearch.appID = Services.BingApiKey;
 
-            Console.WriteLine("Searching Live for 'seattle'...");
+            Console.WriteLine("Searching Bing for 'seattle'...");
 
             dynamic searchOptions = new JsonObject();
             searchOptions.Query = "seattle";
+            searchOptions.Sources = new string[] { "Web", "Image" };
+            searchOptions.Web = new JsonObject("Count", 4);
+            searchOptions.Image = new JsonObject("Count", 2);
 
             dynamic search = bingSearch.invoke(searchOptions);
-            dynamic results = search.Result.SearchResponse.Web.Results;
+            dynamic searchResponse = search.Result.SearchResponse;
 
-            foreach (dynamic item in results) {
+            foreach (dynamic item in searchResponse.Web.Results) {
                 Console.WriteLine(item.Title);
                 Console.WriteLine(item.DisplayUrl);
+                Console.WriteLine();
+            }
+            foreach (dynamic item in searchResponse.Image.Results) {
+                Console.WriteLine(item.Title);
+                Console.WriteLine(item.MediaUrl);
                 Console.WriteLine();
             }
         }

@@ -14,7 +14,7 @@ namespace Application {
         public const string AmazonAccessKey = "???";
         public const string AmazonSecretKey = "???";
 
-        public const string BingSearchUri = "http://api.bing.net/json.aspx?AppId={appID}&Market=en-US&Sources=web";
+        public const string BingSearchUri = "http://api.bing.net/json.aspx?AppId={appID}&Version=2.2&Market=en-US";
         public const string BingApiKey = "???";
 
         public const string GoogleSearchUri = "http://ajax.googleapis.com/ajax/services/search/web?v=1.0";

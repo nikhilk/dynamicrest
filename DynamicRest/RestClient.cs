@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Dynamic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -51,6 +52,7 @@ namespace DynamicRest {
             StringBuilder uriBuilder = new StringBuilder();
 
             List<object> values = new List<object>();
+            HashSet<string> addedParameters = null;
 
             string rewrittenUriFormat = TokenFormatRewriteRegex.Replace(_uriFormat, delegate(Match m) {
                 Group startGroup = m.Groups["start"];
@@ -63,6 +65,11 @@ namespace DynamicRest {
                 }
                 else if (_parameters != null) {
                     values.Add(_parameters[propertyGroup.Value]);
+
+                    if (addedParameters == null) {
+                        addedParameters = new HashSet<string>(StringComparer.Ordinal);
+                    }
+                    addedParameters.Add(propertyGroup.Value);
                 }
 
                 return new string('{', startGroup.Captures.Count) + (values.Count - 1) + formatGroup.Value + new string('}', endGroup.Captures.Count);
@@ -80,12 +87,33 @@ namespace DynamicRest {
 
             if (parameters != null) {
                 foreach (KeyValuePair<string, object> param in (IDictionary<string, object>)parameters) {
-                    if (param.Value is Delegate) {
+                    string name = param.Key;
+                    object value = param.Value;
+
+                    if ((addedParameters != null) && addedParameters.Contains(name)) {
+                        // Already consumed above to substitute a named token
+                        // in the URI format.
                         continue;
                     }
 
-                    string value = String.Format(CultureInfo.InvariantCulture, "{0}", param.Value);
-                    uriBuilder.AppendFormat("&{0}={1}", param.Key, HttpUtility.UrlEncode(value));
+                    if (value is Delegate) {
+                        // Ignore callbacks in the async scenario.
+                        continue;
+                    }
+
+                    if (value is JsonObject) {
+                        // Nested object... use name.subName=value format.
+
+                        foreach (KeyValuePair<string, object> nestedParam in (IDictionary<string, object>)value) {
+                            uriBuilder.AppendFormat("&{0}.{1}={2}",
+                                                    name, nestedParam.Key,
+                                                    FormatUriParameter(nestedParam.Value));
+                        }
+
+                        continue;
+                    }
+
+                    uriBuilder.AppendFormat("&{0}={1}", name, FormatUriParameter(value));
                 }
             }
 
@@ -95,6 +123,15 @@ namespace DynamicRest {
             }
 
             return uri;
+        }
+
+        private string FormatUriParameter(object value) {
+            if (value is IEnumerable<string>) {
+                return String.Join("+", (IEnumerable<string>)value);
+            }
+            else {
+                return HttpUtility.UrlEncode(String.Format(CultureInfo.InvariantCulture, "{0}", value));
+            }
         }
 
         private RestOperation PerformOperation(string operationName, params object[] args) {
