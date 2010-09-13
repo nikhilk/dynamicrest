@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Threading;
 
 namespace DynamicRest {
 
@@ -16,9 +17,11 @@ namespace DynamicRest {
         private string _statusMessage;
         private bool _completed;
 
+        private SynchronizationContext _syncContext;
         private List<RestCallback> _callbacks;
 
         internal RestOperation() {
+            _syncContext = SynchronizationContext.Current;
         }
 
         public Exception Error {
@@ -85,9 +88,20 @@ namespace DynamicRest {
                 RestCallback[] callbacksCopy = _callbacks.ToArray();
                 _callbacks.Clear();
 
-                foreach (RestCallback callback in callbacksCopy) {
-                    callback();
+                if (_syncContext == null) {
+                    InvokeCallbacks(callbacksCopy);
                 }
+                else {
+                    _syncContext.Post(InvokeCallbacks, callbacksCopy);
+                }
+            }
+        }
+
+        private static void InvokeCallbacks(object state) {
+            RestCallback[] callbacks = (RestCallback[])state;
+
+            foreach (RestCallback callback in callbacks) {
+                callback();
             }
         }
     }
