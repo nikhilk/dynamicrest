@@ -150,10 +150,8 @@ namespace DynamicRest {
                 ch = PeekNextSignificantCharacter();
 
                 if (Char.IsDigit(ch) || (ch == '.')) {
-                    if (!hasDecimal)
-                    {
-                        hasDecimal = (ch == '.');
-                    }
+                    hasDecimal = hasDecimal || (ch == '.');
+
                     _reader.Read();
                     sb.Append(ch);
                 }
