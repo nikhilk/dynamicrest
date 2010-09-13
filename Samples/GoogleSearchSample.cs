@@ -16,16 +16,18 @@ namespace Application {
 
             dynamic searchOptions = new JsonObject();
             searchOptions.q = "seattle";
-            searchOptions.callback = (RestCallback)delegate(RestOperation operation) {
-                dynamic results = operation.Result.responseData.results;
+
+            dynamic search = googleSearch.invokeAsync(searchOptions);
+            search.Callback((RestCallback)delegate() {
+                dynamic results = search.Result.responseData.results;
                 foreach (dynamic item in results) {
                     Console.WriteLine(item.titleNoFormatting);
                     Console.WriteLine(item.url);
                     Console.WriteLine();
                 }
-            };
+            });
 
-            dynamic search = googleSearch.invokeAsync(searchOptions);
+
             while (search.IsCompleted == false) {
                 Console.WriteLine(".");
                 Thread.Sleep(100);

@@ -168,18 +168,9 @@ namespace DynamicRest {
         }
 
         private RestOperation PerformOperationAsync(string operationName, params object[] args) {
-            RestCallback callback = null;
-
             JsonObject argsObject = null;
             if ((args != null) && (args.Length != 0)) {
                 argsObject = (JsonObject)args[0];
-            }
-
-            if (argsObject != null) {
-                callback = (RestCallback)argsObject["callback"];
-            }
-            if (callback == null) {
-                throw new InvalidOperationException("Async invocations must include a completion callback.");
             }
 
             RestOperation operation = new RestOperation();
@@ -206,8 +197,6 @@ namespace DynamicRest {
                     operation.Complete(new WebException(webResponse.StatusDescription),
                                        webResponse.StatusCode, webResponse.StatusDescription);
                 }
-
-                callback(operation);
             }, null);
 
             return operation;

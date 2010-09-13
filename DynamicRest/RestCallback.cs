@@ -6,5 +6,5 @@ using System.Net;
 
 namespace DynamicRest {
 
-    public delegate void RestCallback(RestOperation result);
+    public delegate void RestCallback();
 }

@@ -2,6 +2,7 @@
 //
 
 using System;
+using System.Collections.Generic;
 using System.Net;
 
 namespace DynamicRest {
@@ -14,6 +15,8 @@ namespace DynamicRest {
         private HttpStatusCode _statusCode;
         private string _statusMessage;
         private bool _completed;
+
+        private List<RestCallback> _callbacks;
 
         internal RestOperation() {
         }
@@ -48,6 +51,21 @@ namespace DynamicRest {
             }
         }
 
+        public void Callback(RestCallback callback) {
+            if (callback == null) {
+                throw new ArgumentNullException("callback");
+            }
+
+            if (_completed) {
+                callback();
+            }
+
+            if (_callbacks == null) {
+                _callbacks = new List<RestCallback>();
+            }
+            _callbacks.Add(callback);
+        }
+
         internal void Complete(object result, HttpStatusCode statusCode, string statusMessage) {
             Complete(result, null, statusCode, statusMessage);
         }
@@ -62,6 +80,15 @@ namespace DynamicRest {
             _statusCode = statusCode;
             _statusMessage = statusMessage;
             _completed = true;
+
+            if (_callbacks != null) {
+                RestCallback[] callbacksCopy = _callbacks.ToArray();
+                _callbacks.Clear();
+
+                foreach (RestCallback callback in callbacksCopy) {
+                    callback();
+                }
+            }
         }
     }
 }
