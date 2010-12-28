@@ -31,6 +31,7 @@ namespace DynamicRest {
         private IRestUriTransformer _uriTransformer;
         private string _operationGroup;
         private Dictionary<string, object> _parameters;
+        private ICredentials credentials;
 
         public RestClient(string uriFormat, RestService service) {
             _uriFormat = uriFormat;
@@ -40,6 +41,11 @@ namespace DynamicRest {
         public RestClient(string uriFormat, RestService service, IRestUriTransformer uriTransformer)
             : this(uriFormat, service) {
             _uriTransformer = uriTransformer;
+        }
+
+        public RestClient withCredentials(ICredentials credentials) {
+            this.credentials = credentials;
+            return this;
         }
 
         private RestClient(string uriFormat, RestService service, string operationGroup, Dictionary<string, object> inheritedParameters)
@@ -134,6 +140,16 @@ namespace DynamicRest {
             }
         }
 
+        private HttpWebRequest CreateWebRequest(Uri requestUri) {
+            HttpWebRequest request = (HttpWebRequest) WebRequest.Create(requestUri);
+
+            if (this.credentials != null) {
+                request.Credentials = this.credentials;
+            }
+
+            return request;
+        }
+
         private RestOperation PerformOperation(string operationName, params object[] args) {
             JsonObject argsObject = null;
             if ((args != null) && (args.Length != 0)) {
@@ -143,7 +159,7 @@ namespace DynamicRest {
             RestOperation operation = new RestOperation();
 
             Uri requestUri = CreateRequestUri(operationName, argsObject);
-            HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(requestUri);
+            HttpWebRequest webRequest = CreateWebRequest(requestUri);
             HttpWebResponse webResponse = (HttpWebResponse)webRequest.GetResponse();
 
             if (webResponse.StatusCode == HttpStatusCode.OK) {
@@ -176,7 +192,7 @@ namespace DynamicRest {
             RestOperation operation = new RestOperation();
 
             Uri requestUri = CreateRequestUri(operationName, argsObject);
-            HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(requestUri);
+            HttpWebRequest webRequest = CreateWebRequest(requestUri);
 
             webRequest.BeginGetResponse((ar) => {
                 HttpWebResponse webResponse = (HttpWebResponse)webRequest.EndGetResponse(ar);
