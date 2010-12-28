@@ -163,7 +163,7 @@ namespace DynamicRest {
             string s = sb.ToString();
             if (hasDecimal) {
                 float value;
-                if (Single.TryParse(s, out value)) {
+                if (Single.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out value)) {
                     return value;
                 }
             }
