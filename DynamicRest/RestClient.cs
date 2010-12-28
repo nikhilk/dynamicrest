@@ -206,6 +206,10 @@ namespace DynamicRest {
             dynamic result = null;
 
             try {
+                if (_service == RestService.Binary) {
+                    return responseStream;
+                }
+
                 string responseText = (new StreamReader(responseStream)).ReadToEnd();
                 if (_service == RestService.Json) {
                     JsonReader jsonReader = new JsonReader(responseText);
