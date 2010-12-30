@@ -62,7 +62,7 @@
     <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DynamicRest.csproj">
+    <ProjectReference Include="..\DynamicRest\DynamicRest.csproj">
       <Project>{6761F94D-EFCD-49C7-9E8E-ECBCA014FF63}</Project>
       <Name>DynamicRest</Name>
     </ProjectReference>

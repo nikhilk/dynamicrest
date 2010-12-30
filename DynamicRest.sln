@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicRest", "DynamicRest.csproj", "{6761F94D-EFCD-49C7-9E8E-ECBCA014FF63}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicRest", "DynamicRest\DynamicRest.csproj", "{6761F94D-EFCD-49C7-9E8E-ECBCA014FF63}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicRestSamples", "DynamicRestSamples\DynamicRestSamples.csproj", "{33D19AA6-FE4E-4345-8B09-73C290BBB2F2}"
 EndProject
