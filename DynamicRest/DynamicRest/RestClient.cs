@@ -160,24 +160,29 @@ namespace DynamicRest {
 
             Uri requestUri = CreateRequestUri(operationName, argsObject);
             HttpWebRequest webRequest = CreateWebRequest(requestUri);
-            HttpWebResponse webResponse = (HttpWebResponse)webRequest.GetResponse();
 
-            if (webResponse.StatusCode == HttpStatusCode.OK) {
-                Stream responseStream = webResponse.GetResponseStream();
+            try {
+                HttpWebResponse webResponse = (HttpWebResponse)webRequest. GetResponse();
 
-                try {
-                    object result = ProcessResponse(responseStream);
-                    operation.Complete(result,
+                if (webResponse.StatusCode == HttpStatusCode.OK) {
+                    Stream responseStream = webResponse.GetResponseStream();
+
+                    try {
+                        object result = ProcessResponse(responseStream);
+                        operation.Complete(result,
+                                           webResponse.StatusCode, webResponse.StatusDescription);
+                    } catch (Exception e) {
+                        operation.Complete(new WebException(e.Message, e),
+                                           webResponse.StatusCode, webResponse.StatusDescription);
+                    }
+                } else {
+                    operation.Complete(new WebException(webResponse.StatusDescription),
                                        webResponse.StatusCode, webResponse.StatusDescription);
                 }
-                catch (Exception e) {
-                    operation.Complete(new WebException(e.Message, e),
-                                       webResponse.StatusCode, webResponse.StatusDescription);
-                }
-            }
-            else {
-                operation.Complete(new WebException(webResponse.StatusDescription),
-                                   webResponse.StatusCode, webResponse.StatusDescription);
+            } catch (WebException e) {
+                HttpWebResponse response = (HttpWebResponse) e.Response;
+                operation.Complete(e, response.StatusCode, response.StatusDescription);
+
             }
 
             return operation;
