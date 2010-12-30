@@ -6,7 +6,7 @@
     <ProductVersion>10.0.11001</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{6761F94D-EFCD-49C7-9E8E-ECBCA014FF63}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Application</RootNamespace>
     <AssemblyName>DynamicRest</AssemblyName>
@@ -30,6 +30,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
@@ -46,14 +49,7 @@
     <Compile Include="DynamicRest\RestCallback.cs" />
     <Compile Include="DynamicRest\RestOperation.cs" />
     <Compile Include="DynamicRest\IRestUriTransformer.cs" />
-    <Compile Include="Samples\AmazonUriSigner.cs" />
-    <Compile Include="Services.cs" />
-    <Compile Include="Samples\AmazonSample.cs" />
     <Compile Include="DynamicRest\RestService.cs" />
-    <Compile Include="Samples\GoogleSearchSample.cs" />
-    <Compile Include="Samples\BingSearchSample.cs" />
-    <Compile Include="Samples\JsonSample.cs" />
-    <Compile Include="Samples\FlickrSample.cs" />
     <Compile Include="DynamicRest\JsonArray.cs" />
     <Compile Include="DynamicRest\JsonObject.cs" />
     <Compile Include="DynamicRest\JsonReader.cs" />
@@ -61,9 +57,6 @@
     <Compile Include="DynamicRest\XmlNode.cs" />
     <Compile Include="DynamicRest\XmlNodeList.cs" />
     <Compile Include="DynamicRest\RestClient.cs" />
-    <Compile Include="Program.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
