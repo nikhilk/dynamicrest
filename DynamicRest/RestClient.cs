@@ -203,8 +203,11 @@ namespace DynamicRest {
         }
 
         private object ProcessResponse(Stream responseStream) {
-            dynamic result = null;
+            if (_service == RestService.Binary) {
+                return responseStream;
+            }
 
+            dynamic result = null;
             try {
                 string responseText = (new StreamReader(responseStream)).ReadToEnd();
                 if (_service == RestService.Json) {

@@ -9,6 +9,8 @@ namespace DynamicRest {
 
         Json,
 
-        Xml
+        Xml,
+
+        Binary
     }
 }
