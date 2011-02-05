@@ -163,18 +163,18 @@ namespace DynamicRest {
             string s = sb.ToString();
             if (hasDecimal) {
                 float value;
-                if (Single.TryParse(s, out value)) {
+                if (Single.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out value)) {
                     return value;
                 }
             }
             else {
                 int value;
-                if (Int32.TryParse(s, out value)) {
+                if (Int32.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out value)) {
                     return value;
                 }
                 else {
                     long lvalue;
-                    if (Int64.TryParse(s, out lvalue)) {
+                    if (Int64.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out lvalue)) {
                         return lvalue;
                     }
                 }
@@ -295,7 +295,7 @@ namespace DynamicRest {
                 if (hasLeadingSlash && s.StartsWith("@") && s.EndsWith("@")) {
                     long ticks;
 
-                    if (Int64.TryParse(s.Substring(1, s.Length - 2), out ticks)) {
+                    if (Int64.TryParse(s.Substring(1, s.Length - 2), NumberStyles.Any, CultureInfo.InvariantCulture, out ticks)) {
                         value = new DateTime(ticks * 10000 + JsonReader.MinDateTimeTicks, DateTimeKind.Utc);
                     }
                 }
