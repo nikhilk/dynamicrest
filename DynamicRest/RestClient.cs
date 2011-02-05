@@ -150,41 +150,10 @@ namespace DynamicRest {
             RestOperation operation = new RestOperation();
 
             HttpWebRequest webRequest = CreateRequest(operationName, argsObject);
-            HttpWebResponse webResponse = (HttpWebResponse)webRequest.GetResponse();
 
-            if (webResponse.StatusCode == HttpStatusCode.OK) {
-                Stream responseStream = webResponse.GetResponseStream();
+            try {
+                HttpWebResponse webResponse = (HttpWebResponse)webRequest.GetResponse();
 
-                try {
-                    object result = ProcessResponse(responseStream);
-                    operation.Complete(result,
-                                       webResponse.StatusCode, webResponse.StatusDescription);
-                }
-                catch (Exception e) {
-                    operation.Complete(new WebException(e.Message, e),
-                                       webResponse.StatusCode, webResponse.StatusDescription);
-                }
-            }
-            else {
-                operation.Complete(new WebException(webResponse.StatusDescription),
-                                   webResponse.StatusCode, webResponse.StatusDescription);
-            }
-
-            return operation;
-        }
-
-        private RestOperation PerformOperationAsync(string operationName, params object[] args) {
-            JsonObject argsObject = null;
-            if ((args != null) && (args.Length != 0)) {
-                argsObject = (JsonObject)args[0];
-            }
-
-            RestOperation operation = new RestOperation();
-
-            HttpWebRequest webRequest = CreateRequest(operationName, argsObject);
-
-            webRequest.BeginGetResponse((ar) => {
-                HttpWebResponse webResponse = (HttpWebResponse)webRequest.EndGetResponse(ar);
                 if (webResponse.StatusCode == HttpStatusCode.OK) {
                     Stream responseStream = webResponse.GetResponseStream();
 
@@ -201,6 +170,50 @@ namespace DynamicRest {
                 else {
                     operation.Complete(new WebException(webResponse.StatusDescription),
                                        webResponse.StatusCode, webResponse.StatusDescription);
+                }
+            }
+            catch (WebException webException) {
+                HttpWebResponse response = (HttpWebResponse)webException.Response;
+                operation.Complete(webException, response.StatusCode, response.StatusDescription);
+            }
+
+            return operation;
+        }
+
+        private RestOperation PerformOperationAsync(string operationName, params object[] args) {
+            JsonObject argsObject = null;
+            if ((args != null) && (args.Length != 0)) {
+                argsObject = (JsonObject)args[0];
+            }
+
+            RestOperation operation = new RestOperation();
+
+            HttpWebRequest webRequest = CreateRequest(operationName, argsObject);
+
+            webRequest.BeginGetResponse((ar) => {
+                try {
+                    HttpWebResponse webResponse = (HttpWebResponse)webRequest.EndGetResponse(ar);
+                    if (webResponse.StatusCode == HttpStatusCode.OK) {
+                        Stream responseStream = webResponse.GetResponseStream();
+
+                        try {
+                            object result = ProcessResponse(responseStream);
+                            operation.Complete(result,
+                                               webResponse.StatusCode, webResponse.StatusDescription);
+                        }
+                        catch (Exception e) {
+                            operation.Complete(new WebException(e.Message, e),
+                                               webResponse.StatusCode, webResponse.StatusDescription);
+                        }
+                    }
+                    else {
+                        operation.Complete(new WebException(webResponse.StatusDescription),
+                                           webResponse.StatusCode, webResponse.StatusDescription);
+                    }
+                }
+                catch (WebException webException) {
+                    HttpWebResponse response = (HttpWebResponse)webException.Response;
+                    operation.Complete(webException, response.StatusCode, response.StatusDescription);
                 }
             }, null);
 
