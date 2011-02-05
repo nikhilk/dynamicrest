@@ -10,7 +10,8 @@ namespace Application {
 
         public static void Run() {
             AmazonUriSigner signer = new AmazonUriSigner(Services.AmazonAccessKey, Services.AmazonSecretKey);
-            dynamic amazon = new RestClient(Services.AmazonUri, RestService.Xml, signer);
+            dynamic amazon = new RestClient(Services.AmazonUri, RestService.Xml).
+                                 WithUriTransformer(signer);
 
             dynamic searchOptions = new JsonObject();
             searchOptions.SearchIndex = "Books";

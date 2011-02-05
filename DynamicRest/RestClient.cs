@@ -31,21 +31,28 @@ namespace DynamicRest {
         private IRestUriTransformer _uriTransformer;
         private string _operationGroup;
         private Dictionary<string, object> _parameters;
+        private ICredentials _credentials;
 
         public RestClient(string uriFormat, RestService service) {
             _uriFormat = uriFormat;
             _service = service;
         }
 
-        public RestClient(string uriFormat, RestService service, IRestUriTransformer uriTransformer)
-            : this(uriFormat, service) {
-            _uriTransformer = uriTransformer;
-        }
-
         private RestClient(string uriFormat, RestService service, string operationGroup, Dictionary<string, object> inheritedParameters)
             : this(uriFormat, service) {
             _operationGroup = operationGroup;
             _parameters = inheritedParameters;
+        }
+
+        private HttpWebRequest CreateRequest(string operationName, JsonObject parameters) {
+            Uri requestUri = CreateRequestUri(operationName, parameters);
+            HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(requestUri);
+
+            if (_credentials != null) {
+                webRequest.Credentials = _credentials;
+            }
+
+            return webRequest;
         }
 
         private Uri CreateRequestUri(string operationName, JsonObject parameters) {
@@ -142,8 +149,7 @@ namespace DynamicRest {
 
             RestOperation operation = new RestOperation();
 
-            Uri requestUri = CreateRequestUri(operationName, argsObject);
-            HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(requestUri);
+            HttpWebRequest webRequest = CreateRequest(operationName, argsObject);
             HttpWebResponse webResponse = (HttpWebResponse)webRequest.GetResponse();
 
             if (webResponse.StatusCode == HttpStatusCode.OK) {
@@ -175,8 +181,7 @@ namespace DynamicRest {
 
             RestOperation operation = new RestOperation();
 
-            Uri requestUri = CreateRequestUri(operationName, argsObject);
-            HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(requestUri);
+            HttpWebRequest webRequest = CreateRequest(operationName, argsObject);
 
             webRequest.BeginGetResponse((ar) => {
                 HttpWebResponse webResponse = (HttpWebResponse)webRequest.EndGetResponse(ar);
@@ -278,6 +283,24 @@ namespace DynamicRest {
             }
             _parameters[binder.Name] = value;
             return true;
+        }
+
+        public RestClient WithCredentials(ICredentials credentials) {
+            if (credentials == null) {
+                throw new ArgumentNullException("credentials");
+            }
+
+            _credentials = credentials;
+            return this;
+        }
+
+        public RestClient WithUriTransformer(IRestUriTransformer uriTransformer) {
+            if (uriTransformer == null) {
+                throw new ArgumentNullException("uriTransformer");
+            }
+
+            _uriTransformer = uriTransformer;
+            return this;
         }
     }
 }
