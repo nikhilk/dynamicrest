@@ -71,7 +71,7 @@ namespace DynamicRest {
             }
         }
 
-        internal static string QuoteJScriptString(string s) {
+        internal static string EscapeString(string s) {
             if (String.IsNullOrEmpty(s)) {
                 return String.Empty;
             }
@@ -84,7 +84,7 @@ namespace DynamicRest {
 
                 // Append the unhandled characters (that do not require special treament)
                 // to the string builder when special characters are detected.
-                if (c == '\r' || c == '\t' || c == '\"' || c == '\'' ||
+                if (c == '\r' || c == '\t' || c == '\"' ||
                     c == '\\' || c == '\r' || c < ' ' || c > 0x7F) {
                     if (b == null) {
                         b = new StringBuilder(s.Length + 6);
@@ -107,9 +107,6 @@ namespace DynamicRest {
                         break;
                     case '\"':
                         b.Append("\\\"");
-                        break;
-                    case '\'':
-                        b.Append("\\\'");
                         break;
                     case '\\':
                         b.Append("\\\\");
@@ -247,7 +244,7 @@ namespace DynamicRest {
                 WriteCore("null", /* quotes */ false);
             }
             else {
-                WriteCore(QuoteJScriptString(s), /* quotes */ true);
+                WriteCore(EscapeString(s), /* quotes */ true);
             }
         }
 
