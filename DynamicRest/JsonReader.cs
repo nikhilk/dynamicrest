@@ -265,6 +265,15 @@ namespace DynamicRest {
                         }
                         ch = (char)Int32.Parse(unicodeSequence, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
                     }
+                    else if (ch == 'n') {
+                        ch = '\n';
+                    }
+                    else if (ch == 't') {
+                        ch = '\t';
+                    }
+                    else if (ch == 'r') {
+                        ch = '\r';
+                    }
 
                     sb.Append(ch);
                     inEscape = false;

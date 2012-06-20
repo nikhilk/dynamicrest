@@ -84,7 +84,7 @@ namespace DynamicRest {
 
                 // Append the unhandled characters (that do not require special treament)
                 // to the string builder when special characters are detected.
-                if (c == '\r' || c == '\t' || c == '\"' ||
+                if (c == '\n' || c == '\t' || c == '\"' ||
                     c == '\\' || c == '\r' || c < ' ' || c > 0x7F) {
                     if (b == null) {
                         b = new StringBuilder(s.Length + 6);
