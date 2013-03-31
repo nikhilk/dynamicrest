@@ -24,5 +24,10 @@ namespace Application {
         public const string BingApiKey = "???";
 
         public const string GoogleSearchUri = "http://ajax.googleapis.com/ajax/services/search/web?v=1.0";
+		
+		public const string UntappdUri = "http://api.untappd.com/v3/{operation}?key={apiKey}";
+		public const string UntappdApiKey = "???";
+		public const string UntappdCheckinAs = "???";
+		public const string UntappdCheckinAsPassword = "???";
     }
 }

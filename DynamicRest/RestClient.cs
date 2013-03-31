@@ -38,24 +38,69 @@ namespace DynamicRest {
         private string _operationGroup;
         private Dictionary<string, object> _parameters;
         private ICredentials _credentials;
+        private Tuple<string,string> _basicAuth;
+        private List<string> _operationsWhichPost;
 
         public RestClient(string uriFormat, RestService service) {
             _uriFormat = uriFormat;
             _service = service;
         }
 
-        private RestClient(string uriFormat, RestService service, string operationGroup, Dictionary<string, object> inheritedParameters)
+        public RestClient(string uriFormat, RestService service, List<string> postOperations)
+            : this(uriFormat, service) {
+            _operationsWhichPost = postOperations;
+        }
+
+        private RestClient(string uriFormat, RestService service, string operationGroup,
+                           Dictionary<string, object> inheritedParameters)
             : this(uriFormat, service) {
             _operationGroup = operationGroup;
             _parameters = inheritedParameters;
         }
 
+        private RestClient(string uriFormat, RestService service, string operationGroup,
+                           Dictionary<string, object> inheritedParameters, List<string> postOperations)
+            : this(uriFormat, service, operationGroup, inheritedParameters) {
+            _operationsWhichPost = postOperations;
+        }
+
         private HttpWebRequest CreateRequest(string operationName, JsonObject parameters) {
-            Uri requestUri = CreateRequestUri(operationName, parameters);
-            HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(requestUri);
+            Uri requestUri;
+            HttpWebRequest webRequest;
+
+            if(null != _operationsWhichPost && _operationsWhichPost.Contains(operationName))
+            {
+                // POST operations don't take their parameters on the querystring
+                requestUri = CreateRequestUri(operationName, new JsonObject());
+            } else {
+                requestUri = CreateRequestUri(operationName, parameters);
+            }
+
+            webRequest = (HttpWebRequest)WebRequest.Create(requestUri);
 
             if (_credentials != null) {
                 webRequest.Credentials = _credentials;
+            }
+
+            if(_basicAuth != null) {
+                string authInfo = _basicAuth.Item1 + ":" + _basicAuth.Item2;
+                authInfo = Convert.ToBase64String(Encoding.Default.GetBytes(authInfo));
+                webRequest.Headers["Authorization"] = "Basic " + authInfo;
+            }
+
+            if(null != _operationsWhichPost && _operationsWhichPost.Contains(operationName))
+            {
+                // format as a POST request
+                byte[] body = Encoding.UTF8.GetBytes(CreatePostBody(parameters));
+                webRequest.Method = "POST";
+                webRequest.ContentLength = body.Length;
+                webRequest.ContentType = "application/x-www-form-urlencoded";
+
+                // send up the body
+                using (var requestStream = webRequest.GetRequestStream())
+                {
+                    requestStream.Write( body, 0, body.Length );
+                }
             }
 
             return webRequest;
@@ -136,6 +181,43 @@ namespace DynamicRest {
             }
 
             return uri;
+        }
+
+        private string CreatePostBody(JsonObject parameters) {
+            StringBuilder bodyBuilder = new StringBuilder();
+
+            if (parameters != null) {
+                foreach (KeyValuePair<string, object> param in (IDictionary<string, object>)parameters) {
+                    string name = param.Key;
+                    object value = param.Value;
+
+                    if (value is Delegate) {
+                        // Ignore callbacks in the async scenario.
+                        continue;
+                    }
+
+                    if (value is JsonObject) {
+                        // Nested object... use name.subName=value format.
+
+                        foreach (KeyValuePair<string, object> nestedParam in (IDictionary<string, object>)value) {
+                            bodyBuilder.AppendFormat("&{0}.{1}={2}",
+                                                    name, nestedParam.Key,
+                                                    FormatUriParameter(nestedParam.Value));
+                        }
+
+                        continue;
+                    }
+
+                    bodyBuilder.AppendFormat("&{0}={1}", name, FormatUriParameter(value));
+                }
+            }
+
+            // ignore the leading "&"
+            try {
+                bodyBuilder.Remove(0, 1);
+            } catch(ArgumentOutOfRangeException) { }
+
+            return bodyBuilder.ToString();
         }
 
         private string FormatUriParameter(object value) {
@@ -267,8 +349,15 @@ namespace DynamicRest {
                 operationGroup = _operationGroup + "." + operationGroup;
             }
 
-            RestClient operationGroupClient =
-                new RestClient(_uriFormat, _service, operationGroup, _parameters);
+            RestClient operationGroupClient;
+            if(null != _operationsWhichPost)
+            {
+                operationGroupClient =
+                    new RestClient(_uriFormat, _service, operationGroup, _parameters, _operationsWhichPost);
+            } else {
+                operationGroupClient =
+                    new RestClient(_uriFormat, _service, operationGroup, _parameters);
+            }
 
             result = operationGroupClient;
             return true;
@@ -312,6 +401,14 @@ namespace DynamicRest {
             _credentials = credentials;
             return this;
         }
+
+        // 2011-05-14 Matt Cooper
+        // Add a WithBasicAuth method to support Untappd
+        public RestClient WithBasicAuth(string Username, string Password) {
+            _basicAuth = new Tuple<string, string>(Username, Password);
+            return this;
+        }
+        // end changes
 
         public RestClient WithUriTransformer(IRestUriTransformer uriTransformer) {
             if (uriTransformer == null) {

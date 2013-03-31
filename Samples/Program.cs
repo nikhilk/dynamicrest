@@ -53,6 +53,12 @@ namespace Application {
             Console.WriteLine(HeaderBar);
             GoogleSearchSample.Run();
             Console.WriteLine(Separator);
+			
+			// Untappd Checkin
+            Console.WriteLine("Untappd Checkin Sample");
+            Console.WriteLine(HeaderBar);
+            UntappdSample.Run();
+            Console.WriteLine(Separator);
 
             Console.ReadLine();
         }
